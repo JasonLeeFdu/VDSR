@@ -18,7 +18,7 @@ SEED = random.randint(1, 900000)
 LOG_PATH = os.path.join(_PROJECT_BASEPATH,'Log')
 LR_INTERVAL = 20
 WEIGHT_DECAY= 0.0#0.0000001
-MOMENTUM = 0.93
+MOMENTUM = 0.9
 
 ## Hyper parameters concerning with training performance and Gradient Deminish or ex
 ## GRADIENT_CLIP = 0.1                      # small
