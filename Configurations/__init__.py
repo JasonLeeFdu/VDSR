@@ -17,15 +17,15 @@ GPUS = 0
 SEED = random.randint(1, 900000)
 LOG_PATH = os.path.join(_PROJECT_BASEPATH,'Log')
 LR_INTERVAL = 20
-WEIGHT_DECAY= 1e-4#0.0000001
+WEIGHT_DECAY= 0.0#0.0000001
 MOMENTUM = 0.9
 
 ## Hyper parameters concerning with training performance and Gradient Deminish or ex
-GRADIENT_CLIP = 0.007                      # small
+## GRADIENT_CLIP = 0.1                      # small
 LR = 1e-4#3                                # small 0.0005
 BATCH_SIZE = 64                             # X
-WEIGHT_INIT_STDDEV_FACTOR = 1.45            # big
+WEIGHT_INIT_STDDEV_FACTOR = 1.43            # big
 SUMMARY_SCALAR_FIX  = 3e-3
-
+GRADIENT_CLIP_THETA = 0.2
 
 

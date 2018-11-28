@@ -80,7 +80,48 @@ def main():
 
     # optimizer
     if conf.WEIGHT_DECAY == 0:
-        optimizer = optim.Adam(net.parameters(), lr=conf.LR)
+        optimizer = optim.Adam([
+            {'params': net.conv1.weight, 'lr': 1*conf.LR},
+            {'params': net.conv1.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv2.weight, 'lr': 1*conf.LR},
+            {'params': net.conv2.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv3.weight, 'lr': 1*conf.LR},
+            {'params': net.conv3.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv4.weight, 'lr': 1*conf.LR},
+            {'params': net.conv4.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv5.weight, 'lr': 1*conf.LR},
+            {'params': net.conv5.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv6.weight, 'lr': 1*conf.LR},
+            {'params': net.conv6.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv7.weight, 'lr': 1*conf.LR},
+            {'params': net.conv7.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv8.weight, 'lr': 1*conf.LR},
+            {'params': net.conv8.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv9.weight, 'lr': 1*conf.LR},
+            {'params': net.conv9.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv10.weight, 'lr': 1*conf.LR},
+            {'params': net.conv10.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv11.weight, 'lr': 1*conf.LR},
+            {'params': net.conv11.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv12.weight, 'lr': 1*conf.LR},
+            {'params': net.conv12.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv13.weight, 'lr': 1*conf.LR},
+            {'params': net.conv13.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv14.weight, 'lr': 1*conf.LR},
+            {'params': net.conv14.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv15.weight, 'lr': 1*conf.LR},
+            {'params': net.conv15.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv16.weight, 'lr': 1*conf.LR},
+            {'params': net.conv16.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv17.weight, 'lr': 1*conf.LR},
+            {'params': net.conv17.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv18.weight, 'lr': 1*conf.LR},
+            {'params': net.conv18.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv19.weight, 'lr': 1*conf.LR},
+            {'params': net.conv19.bias, 'lr': 0.1*conf.LR},
+            {'params': net.conv20.weight, 'lr': 1*conf.LR},
+            {'params': net.conv20.bias, 'lr': 0.1*conf.LR},
+        ], lr=conf.LR)
     else:
         #optimizer = optim.Adam(net.parameters(),lr=conf.LR,weight_decay=conf.WEIGHT_DECAY)
         optimizer = optim.Adam([
@@ -144,9 +185,9 @@ def main():
             #####
             optimizer.zero_grad()      #
             pred=net(x)
-            loss = criterion(pred+x,y) #
+            loss = criterion(pred,y-x) #
             loss.backward()            #
-            nn.utils.clip_grad_norm_(net.parameters(), conf.GRADIENT_CLIP)
+            utils.gradientClip(net.parameters(), conf.GRADIENT_CLIP_THETA)
             optimizer.step()
             ####
 
@@ -181,8 +222,9 @@ def main():
             if iterNum % conf.SUM_INTERVAL == 0 and iterNum is not 0:
                 sumWriter.add_image('Data/input', x, globalStep)
                 sumWriter.add_image('Data/Label', y, globalStep)
-                sumWriter.add_image('Data/pred', pred + x, globalStep)
-                sumWriter.add_image('Data/res', pred, globalStep)
+                sumWriter.add_image('Data/result', pred + x, globalStep)
+                sumWriter.add_image('Data/pred', pred, globalStep)
+                sumWriter.add_image('Data/residualToLearn', y- x, globalStep)
                 # for better visualization
                 nc = np.random.randint(0,conf.BATCH_SIZE-1)
                 xnc = x[nc,:,:,:]
@@ -191,8 +233,9 @@ def main():
 
                 sumWriter.add_image('Vis/input', xnc, globalStep)
                 sumWriter.add_image('Vis/Label', ync, globalStep)
-                sumWriter.add_image('Vis/pred', prnc + xnc, globalStep)
-                sumWriter.add_image('Vis/res', prnc, globalStep)
+                sumWriter.add_image('Vis/result', prnc + xnc, globalStep)
+                sumWriter.add_image('Vis/pred', prnc, globalStep)
+                sumWriter.add_image('Vis/residualToLearn', ync - xnc, globalStep)
 
             if iterNum % conf.SAVE_INTERVAL == 0 and iterNum is not 0:
                 utils.saveCheckpoint(net.state_dict(),epoch_pos,iterNum,globalStep)

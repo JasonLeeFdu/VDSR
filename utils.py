@@ -20,6 +20,7 @@ from datetime import datetime
 import math
 import pickle
 import io
+import torch
 
 def saveCheckpoint(netModel,epoch,iterr,glbiter,fnCore='model'):
     ##net_state = netModel.state_dict()
@@ -68,6 +69,11 @@ def loadLatestCheckpoint(fnCore='model'):
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
+
+def gradientClip(netParames,factor):
+    for param in netParames:
+        param.grad.data = torch.max(torch.FloatTensor([-factor]).expand_as(param).cuda(), param.grad.data)
+        param.grad.data = torch.min(torch.FloatTensor([factor]).expand_as(param).cuda(), param.grad.data)
 
 
 if __name__ == '__main__':
