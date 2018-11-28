@@ -153,4 +153,8 @@ class LSUN(data.Dataset):
         fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         tmp = '    Target Transforms (if any): '
         fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+<<<<<<< HEAD
 return fmt_str
+=======
+        return fmt_str
+>>>>>>> d4859d7358362ec141282d0ab49cee8678db876b
