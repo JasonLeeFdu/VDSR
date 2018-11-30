@@ -64,7 +64,7 @@ class SRDB291(data.Dataset):
                     fpn = os.path.join(conf.SRDS291_PATH,fn)
                     img = Image.open(fpn)
                     innerCounter = 0
-                    pstrd = random.randint(int(psz / 4) - 2, int(psz / 4) + 2)
+                    pstrd = random.randint(int(psz / 3.5) - 2, int(psz / 3.5) + 2)
                     w,h = img.size
                     li = list(range(int(w / pstrd)))
                     stepX = [x*pstrd for x in li if (x*pstrd)<=(w-psz) ]
