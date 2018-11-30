@@ -167,11 +167,13 @@ def main():
             {'params': net.conv20.bias, 'lr': 0.1*conf.LR},
         ], lr=conf.LR, weight_decay=conf.WEIGHT_DECAY)
     net.train()
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=math.sqrt(0.1))
     # numerial statistic visible for training console
     AvgFreq = 0; Avgloss = 0;
 
     ## TRAINING EPOCH
+    for epoch_pos in range(epoch):
+        scheduler.step()
     for epoch_pos in range(epoch,conf.MAX_Epoch):
         print('----------------------- Epoch %d ----------------------------'%(epoch_pos))
         scheduler.step()
@@ -187,7 +189,7 @@ def main():
             pred=net(x)
             loss = criterion(pred,y-x) #
             loss.backward()            #
-            utils.gradientClip(net.parameters(), conf.GRADIENT_CLIP_THETA)
+            utils.gradientClip(net.parameters(), conf.GRADIENT_CLIP_THETA/utils.get_lr(optimizer))
             optimizer.step()
             ####
 
