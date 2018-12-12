@@ -45,14 +45,13 @@ def main():
     # load the dataset
     srDs = dm.SRDB291()
     # load the network
-    net = nt.VDSR
+    #net = nt.VDSR
+    net = nt.VDSR()
     if not os.path.exists(conf.MODEL_PATH):
         os.mkdir(conf.MODEL_PATH)
     if not os.path.exists(conf.LOG_PATH):
         os.mkdir(conf.LOG_PATH)
     sumWriter = tbx.SummaryWriter(log_dir=conf.LOG_PATH)
-
-
 
     net_stat,epoch,iterr,globalStep = utils.loadLatestCheckpoint()
     if net_stat is None:
@@ -172,7 +171,7 @@ def main():
     AvgFreq = 0; Avgloss = 0;
 
     ## TRAINING EPOCH
-    for epoch_pos in range(epoch):
+    for epoch_pos in range(epoch): # set the current lr according to the epochs passed
         scheduler.step()
     for epoch_pos in range(epoch,conf.MAX_Epoch):
         print('----------------------- Epoch %d ----------------------------'%(epoch_pos))

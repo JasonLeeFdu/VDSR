@@ -21,6 +21,7 @@ import math
 import pickle
 import io
 import torch
+import network as nt
 
 def saveCheckpoint(netModel,epoch,iterr,glbiter,fnCore='model'):
     ##net_state = netModel.state_dict()
@@ -76,6 +77,62 @@ def gradientClip(netParames,factor):
         param.grad.data = torch.min(torch.FloatTensor([factor]).expand_as(param).cuda(), param.grad.data)
 
 
+def testPSNR(netModule,testSetPath):
+    # read the dirs and get to know the sets
+    # we have tsNum ds in dsList
+    tsNames = os.listdir(testSetPath)
+    tsNum   = len(tsNames)
+    dsLoaderList  = list()
+    resDict = dict()
+    # load the datasets
+    for i in range(tsNum):
+        ds = datasets.ImageFolder(os.path.join(testSetPath,tsNames[i]))
+        dataloader = torch.utils.data.DataLoader(ds, batch_size=1, shuffle=False, num_workers=1)
+        dsLoaderList.append(dataloader)
+
+    for idxTestSet in range(tsNum):
+        a = 1
+
+    # Do the test
+
+    # return  the results of the psnr per test
+
+
+def PSNR_NP_Y255(im1, im2):
+    if len(im1.shape) != len(im2.shape):
+        print('Unmatched shape!')
+        return
+    if len(im1.shape) == 3 and im1.shape[2] == 3:
+        im1yuv = cv.cvtColor(im1, cv.COLOR_BGR2YCR_CB)
+        im1 = im1yuv[:, :, 0]
+    if len(im2.shape) == 3 and im2.shape[2] == 3:
+        im2yuv = cv.cvtColor(im2, cv.COLOR_BGR2YCR_CB)
+        im2 = im2yuv[:, :, 0]
+    imdelta = (np.float64(im1) - np.float64(im2))
+    rmse = math.sqrt(np.mean(imdelta ** 2))
+    psnr = 20 * np.log10(255 / rmse)
+    return psnr
+
+
+def PSNR_PT_Y255(in1,in2):
+    #NCHW
+    #if
+    in1 = torch.squeeze(in1)
+    in2 = torch.squeeze(in2)
+
+    if in1.shape != in2.shape:
+        return
+    imdelta = in1 - in2
+    rmse = torch.sqrt(torch.mean(torch.pow(imdelta,2)))
+    psnr = 20*torch.log10(255/rmse)
+    return psnr
+
+
+
+
+
+
+
 if __name__ == '__main__':
     '''
     saveCheckpoint('1', 2, 28342, fnCore='model')
@@ -84,4 +141,16 @@ if __name__ == '__main__':
     saveCheckpoint('dfsa1', 2, 2, fnCore='model')
     saveCheckpoint('sdf1', 1, 728342, fnCore='model')
     '''
-    loadLatestCheckpoint()
+    #testPSNR(nt.VDSR(), conf.TEST_SET_PATH)
+
+    # NCHW
+    im1 = np.array([1.0,2,3,4,5,6,7,8,9])
+    im1 = np.reshape(im1,[1,1,3,3])
+    im2 = np.array([1.0,2,3,4,5,6,5,6,9])
+    im2 = np.reshape(im2,[1,1,3,3])
+    im1T = torch.Tensor(im1)
+    im2T = torch.Tensor(im2)
+
+    b = PSNR_PT_Y255(im1T, im2T)
+    a  = 1
+
