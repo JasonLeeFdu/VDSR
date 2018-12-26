@@ -22,6 +22,7 @@ import pickle
 import io
 import torch
 import network as nt
+import scipy
 
 def saveCheckpoint(netModel,epoch,iterr,glbiter,fnCore='model'):
     ##net_state = netModel.state_dict()
@@ -76,28 +77,6 @@ def gradientClip(netParames,factor):
         param.grad.data = torch.max(torch.FloatTensor([-factor]).expand_as(param).cuda(), param.grad.data)
         param.grad.data = torch.min(torch.FloatTensor([factor]).expand_as(param).cuda(), param.grad.data)
 
-
-def testPSNR(netModule,testSetPath):
-    # read the dirs and get to know the sets
-    # we have tsNum ds in dsList
-    tsNames = os.listdir(testSetPath)
-    tsNum   = len(tsNames)
-    dsLoaderList  = list()
-    resDict = dict()
-    # load the datasets
-    for i in range(tsNum):
-        ds = datasets.ImageFolder(os.path.join(testSetPath,tsNames[i]))
-        dataloader = torch.utils.data.DataLoader(ds, batch_size=1, shuffle=False, num_workers=1)
-        dsLoaderList.append(dataloader)
-
-    for idxTestSet in range(tsNum):
-        a = 1
-
-    # Do the test
-
-    # return  the results of the psnr per test
-
-
 def PSNR_NP_Y255(im1, im2):
     if len(im1.shape) != len(im2.shape):
         print('Unmatched shape!')
@@ -127,6 +106,90 @@ def PSNR_PT_Y255(in1,in2):
     psnr = 20*torch.log10(255/rmse)
     return psnr
 
+def testPSNR(netModule,testSetPath,scale):
+    # read the dirs and get to know the sets
+    # we have tsNum ds in dsList
+    netModule = netModule.cuda()
+    tsNames = os.listdir(testSetPath)
+    tsNames.sort()
+    tsNum   = len(tsNames)
+    resDict = dict()
+    transformer = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    # load the datasets
+    ds = datasets.ImageFolder(os.path.join(testSetPath),transform=transformer)
+    dataloader = torch.utils.data.DataLoader(ds, batch_size=1, shuffle=False, num_workers=1)
+    dsLoader = dataloader
+    sumList = np.zeros(tsNum)
+    numList = np.zeros(tsNum)
+
+    for idxTestSet in range(tsNum):
+        tsName = tsNames[idxTestSet]
+        sum = 0.0;counter = 0;
+
+        for _, smpl in enumerate(dsLoader, 1):
+            y = np.array(smpl[0])
+            numList[smpl[1]] += 1
+            y = np.squeeze(y)
+            y = np.transpose(y,[1,2,0])
+            h  = y.shape[0]; w = y.shape[1];
+            if len(y.shape)  == 3:
+                c = 3
+            else:
+                c = 1
+            y = np.minimum(np.maximum(0,np.round(y*255)),255)
+            y = y.astype(np.uint8)  # rgb
+            y = y[:,:,[2,1,0]]      # bgr
+            # Y
+            if c == 3:
+                yYUV = cv.cvtColor(y, cv.COLOR_BGR2YCR_CB)
+                yY = yYUV[:, :, 0]
+            else:
+                yY = y
+
+            # reshape
+            xY = scipy.misc.imresize(yY, (int(h / scale), int(w / scale)),
+                                             interp='bicubic', mode=None)
+            xY = scipy.misc.imresize(xY, (int(h), int(w)),
+                                             interp='bicubic', mode=None)
+
+            inxY = torch.Tensor(xY/255)
+            inxY = torch.unsqueeze(torch.unsqueeze(inxY,0),0)
+
+            inxY = inxY.cuda()
+            predY = netModule(inxY) + inxY
+
+            predY = torch.max(torch.FloatTensor([0.0]).expand_as(predY).cuda(), predY)
+            predY = torch.min(torch.FloatTensor([1.0]).expand_as(predY).cuda(), predY)
+
+            predY = torch.round(predY * 255)
+
+
+            inY = torch.Tensor(yY)
+            inY = inY.cuda()
+            res = PSNR_PT_Y255(predY,inY).detach().cpu().numpy()
+
+
+
+            predYNp   = predY.detach().cpu().numpy();predYNp = predYNp.astype(np.uint8);predYNp = predYNp.squeeze();
+            inYNp     = inY.detach().cpu().numpy();inYNp = inYNp.astype(np.uint8);inYNp = inYNp.squeeze();
+            cv.imshow('predYNp'+str(res),predYNp);cv.imshow('inputa',xY);cv.imshow('inY',inYNp);cv.waitKey(0);cv.destroyAllWindows()
+            numList[smpl[1]] +=  np.array(res)
+
+
+
+            #psnr = PSNR_PT_Y255(inx.iny)
+            #sum
+    z = 1
+
+
+    # Do the test
+
+    # return  the results of the psnr per test
+
+
+
 
 
 
@@ -144,13 +207,73 @@ if __name__ == '__main__':
     #testPSNR(nt.VDSR(), conf.TEST_SET_PATH)
 
     # NCHW
-    im1 = np.array([1.0,2,3,4,5,6,7,8,9])
-    im1 = np.reshape(im1,[1,1,3,3])
-    im2 = np.array([1.0,2,3,4,5,6,5,6,9])
-    im2 = np.reshape(im2,[1,1,3,3])
-    im1T = torch.Tensor(im1)
-    im2T = torch.Tensor(im2)
 
-    b = PSNR_PT_Y255(im1T, im2T)
+    net = nt.VDSR()
+    net_stat, epoch, iterr, globalStep = loadLatestCheckpoint()
+    if net_stat is None:
+        print('No previous model found, start training now')
+    else:
+        net.load_state_dict(net_stat)
+        print('The lastest version is Epoch %d, iter is %d，GLoablStep: %d' % (epoch, iterr, globalStep))
+        # globalStep += 1
+
+    testPSNR(net, conf.TEST_SET_PATH,4)
     a  = 1
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''
+    MAX = 80000
+
+    inx = torch.rand([1,77])
+    lbl = inx * 8.932 + 0.4
+
+    inx = torch.FloatTensor(inx).cuda()
+    lbl = torch.FloatTensor(lbl).cuda()
+
+    w   = torch.nn.Parameter(torch.FloatTensor([1.0]).cuda(),requires_grad=True)
+    h   = torch.nn.Parameter(torch.FloatTensor([2.0]).cuda(),requires_grad=True)
+
+    optimizer = optim.SGD([w,h], lr=0.001)
+    for i in range(MAX):
+        optimizer.zero_grad()
+        y = w.matmul(inx) + h
+        loss = torch.mean((lbl - y).pow(2))
+        loss.backward()
+        if i%1 == 0:
+            print('step:',str(i))
+            print('W:')
+            print(w)
+            print('h:')
+            H = h.detach()
+            H.data.add_(100)
+            print(h)
+            print('H:')
+            print(H)
+            print('Loss:')
+            print(loss)
+            print('----------------------------');print('')
+        optimizer.step()
+        s  = 1
+    '''
