@@ -24,6 +24,8 @@ MOMENTUM = 0.9
 ## GRADIENT_CLIP = 0.1                     　# small
 LR = 1e-4#3                                　# small 0.0005
 BATCH_SIZE = 64                              # X
-WEIGHT_INIT_STDDEV_FACTOR = 1              # big
+WEIGHT_INIT_STDDEV_FACTOR = 1               # big
 SUMMARY_SCALAR_FIX  = 3e-3
 GRADIENT_CLIP_THETA = 0.1
+
+

@@ -222,6 +222,7 @@ def main():
                 AvgFreq = 0
                 Avgloss = 0
 
+
             if iterNum % conf.SUM_INTERVAL == 0 and iterNum is not 0:
                 sumWriter.add_image('Data/input', x, globalStep)
                 sumWriter.add_image('Data/Label', y, globalStep)
