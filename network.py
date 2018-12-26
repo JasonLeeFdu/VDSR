@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch
 import math
 import Configurations as conf
+import torch.nn.functional as F
+
 '''
 1.注意问题：
 1)每一个forward函数都应该有返回值
@@ -14,140 +16,44 @@ import Configurations as conf
 '''
 
 
-class convLayer(nn.Module):
-    def __init__(self,ksz,inc,outc):
-        super(convLayer, self).__init__()
-        pad = int((ksz - 1) / 2)  # The pad should be an integer
-        self.conv = nn.Conv2d(inc,outc,ksz,padding=pad)
-        self.relu = nn.ReLU()
-    def forward(self, x):
-        conv = self.conv(x)
-        relu = self.relu(conv)
-        return relu
 
-'''
+
+class Inner18Layers(nn.Module): ## OP + forward类型,最为一个自定义nn.Module整体
+    def __init__(self):
+        super(Inner18Layers, self).__init__()
+        self.op = nn.Sequential()
+        for i in range(18):
+            self.op.add_module('conv_' + str(i),nn.Conv2d(64,64,3,1,1))
+            self.op.add_module('relu_'+str(i),nn.ReLU(inplace=True))
+    def forward(self, x):
+        res = self.op(x)
+        return res
+
+## specify module fine-grind类型，充分使用预先定义好的模型
+def inner18LayersMod():
+    block = nn.Sequential()
+    for i in range(18):
+        block.add_module('conv_' + str(i), nn.Conv2d(64, 64, 3, 1, 1))
+        block.add_module('relu_' + str(i), nn.ReLU(inplace=True))
+    return block
+
+
 
 class VDSR(nn.Module):
     def __init__(self):
         super(VDSR, self).__init__()
-        self.conv1 = convLayer(3,1,64)
-        #self.middleconvs = self.repeatConvLayers()
-        self.conv3 = convLayer(3, 64, 1)
-
-
-    def repeatConvLayers(self):
-        block = nn.Sequential()
-        for i in range(18):
-            block.add_module('middle'+str(i), convLayer(3, 64, 64))
-        return block
-
-
+        self.conv1 = nn.Conv2d(1,64,3,1,1)
+        self.convRelu2 = Inner18Layers()#Inner18Layers()   inner18LayersMod
+        self.conv3 = nn.Conv2d(64, 1, 3, 1, 1)
+        self.reg()
 
     def forward(self, x):
-        conv_1 = self.conv1(x)
-        #conv_2 = self.middleconvs(conv_1) # which means different layers with unique param
-        conv_3 = self.conv3(conv_1)
-        out = torch.add(conv_3 , x)
-        return out
-
-'''
-
-VDSR = nn.Sequential()
-VDSR.add_module('conv1',nn.Conv2d(1,64,3,1,1))
-VDSR.add_module('relu1',nn.ReLU())
-
-VDSR.add_module('conv2',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu2',nn.ReLU())
-
-VDSR.add_module('conv3',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu3',nn.ReLU())
-
-VDSR.add_module('conv4',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu4',nn.ReLU())
-
-VDSR.add_module('conv5',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu5',nn.ReLU())
-
-VDSR.add_module('conv6',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu6',nn.ReLU())
-
-VDSR.add_module('conv7',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu7',nn.ReLU())
-
-VDSR.add_module('conv8',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu8',nn.ReLU())
-
-VDSR.add_module('conv9',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu9',nn.ReLU())
-
-VDSR.add_module('conv10',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu10',nn.ReLU())
-
-VDSR.add_module('conv11',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu11',nn.ReLU())
-
-VDSR.add_module('conv12',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu12',nn.ReLU())
-
-VDSR.add_module('conv13',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu13',nn.ReLU())
-
-VDSR.add_module('conv14',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu14',nn.ReLU())
-
-VDSR.add_module('conv15',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu15',nn.ReLU())
-
-VDSR.add_module('conv16',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu16',nn.ReLU())
-
-VDSR.add_module('conv17',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu17',nn.ReLU())
-
-VDSR.add_module('conv18',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu18',nn.ReLU())
-
-VDSR.add_module('conv19',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('relu19',nn.ReLU())
-
-VDSR.add_module('conv20',nn.Conv2d(64,1,3,1,1))
-
-for m in VDSR.modules():
-    if isinstance(m, nn.Conv2d):
-        n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-        m.weight.data.normal_(0, math.sqrt(2. / n)/conf.WEIGHT_INIT_STDDEV_FACTOR)
-
-
-# def main():
-#
-#
-#
-#
-# if __name__ == '__main__':
-#         main()
-
-'''
-VDSR = nn.Sequential()
-VDSR.add_module('conv1',nn.Conv2d(1,64,3,1,1))
-VDSR.add_module('conv2',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv3',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv4',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv5',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv6',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv7',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv8',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv9',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv10',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv11',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv12',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv13',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv14',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv15',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv16',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv17',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv18',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv19',nn.Conv2d(64,64,3,1,1))
-VDSR.add_module('conv20',nn.Conv2d(64,1,3,1,1))
-
-
-'''
+        conv_1 = F.relu(self.conv1(x))
+        lastconv = self.convRelu2(conv_1)
+        res = self.conv3(lastconv)
+        return res
+    def reg(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n) / conf.WEIGHT_INIT_STDDEV_FACTOR)

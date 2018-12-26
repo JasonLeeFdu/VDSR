@@ -46,14 +46,13 @@ def main():
     # load the dataset
     srDs = dm.SRDB291()
     # load the network
-    net = nt.VDSR
+    #net = nt.VDSR
+    net = nt.VDSR()
     if not os.path.exists(conf.MODEL_PATH):
         os.mkdir(conf.MODEL_PATH)
     if not os.path.exists(conf.LOG_PATH):
         os.mkdir(conf.LOG_PATH)
     sumWriter = tbx.SummaryWriter(log_dir=conf.LOG_PATH)
-
-
 
     net_stat,epoch,iterr,globalStep = utils.loadLatestCheckpoint()
     if net_stat is None:
@@ -128,44 +127,44 @@ def main():
         optimizer = optim.Adam([
             {'params': net.conv1.weight, 'lr': 1*conf.LR},
             {'params': net.conv1.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv2.weight, 'lr': 1*conf.LR},
-            {'params': net.conv2.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_0.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_0.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_１.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_１.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_２.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_２.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_３.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_３.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_４.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_４.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_５.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_５.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_６.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_６.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_７.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_７.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_８.weight, 'lr': 1*conf.LR},
+            {'params': net.convRelu2.op.conv_８.bias, 'lr': 0.1*conf.LR},
+            {'params': net.convRelu2.op.conv_９.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_９.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１0.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１0.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１1.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１1.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１2.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１2.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１3.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１3.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１4.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１4.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１5.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１5.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１6.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１6.bias, 'lr': 0.1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１7.weight, 'lr': 1 * conf.LR},
+            {'params': net.convRelu2.op.conv_１7.bias, 'lr': 0.1 * conf.LR},
             {'params': net.conv3.weight, 'lr': 1*conf.LR},
             {'params': net.conv3.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv4.weight, 'lr': 1*conf.LR},
-            {'params': net.conv4.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv5.weight, 'lr': 1*conf.LR},
-            {'params': net.conv5.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv6.weight, 'lr': 1*conf.LR},
-            {'params': net.conv6.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv7.weight, 'lr': 1*conf.LR},
-            {'params': net.conv7.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv8.weight, 'lr': 1*conf.LR},
-            {'params': net.conv8.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv9.weight, 'lr': 1*conf.LR},
-            {'params': net.conv9.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv10.weight, 'lr': 1*conf.LR},
-            {'params': net.conv10.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv11.weight, 'lr': 1*conf.LR},
-            {'params': net.conv11.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv12.weight, 'lr': 1*conf.LR},
-            {'params': net.conv12.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv13.weight, 'lr': 1*conf.LR},
-            {'params': net.conv13.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv14.weight, 'lr': 1*conf.LR},
-            {'params': net.conv14.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv15.weight, 'lr': 1*conf.LR},
-            {'params': net.conv15.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv16.weight, 'lr': 1*conf.LR},
-            {'params': net.conv16.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv17.weight, 'lr': 1*conf.LR},
-            {'params': net.conv17.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv18.weight, 'lr': 1*conf.LR},
-            {'params': net.conv18.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv19.weight, 'lr': 1*conf.LR},
-            {'params': net.conv19.bias, 'lr': 0.1*conf.LR},
-            {'params': net.conv20.weight, 'lr': 1*conf.LR},
-            {'params': net.conv20.bias, 'lr': 0.1*conf.LR},
         ], lr=conf.LR, weight_decay=conf.WEIGHT_DECAY)
     net.train()
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=math.sqrt(0.1))
@@ -173,7 +172,7 @@ def main():
     AvgFreq = 0; Avgloss = 0;
 
     ## TRAINING EPOCH
-    for epoch_pos in range(epoch):
+    for epoch_pos in range(epoch): # set the current lr according to the epochs passed
         scheduler.step()
     for epoch_pos in range(epoch,conf.MAX_Epoch):
         print('----------------------- Epoch %d ----------------------------'%(epoch_pos))
