@@ -175,7 +175,7 @@ def testPSNR(netModule,testSetPath,scale):
             predYNp   = predY.detach().cpu().numpy();predYNp = predYNp.astype(np.uint8);predYNp = predYNp.squeeze();
             inYNp     = inY.detach().cpu().numpy();inYNp = inYNp.astype(np.uint8);inYNp = inYNp.squeeze();
             cv.imshow('predYNp'+str(res),predYNp);cv.imshow('inputa',xY);cv.imshow('inY',inYNp);cv.waitKey(0);cv.destroyAllWindows()
-            numList[smpl[1]] +=  np.array(res)  
+            numList[smpl[1]] +=  np.array(res)
 
 
 
