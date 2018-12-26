@@ -20,6 +20,7 @@ from datetime import datetime
 import math
 import utils
 import tensorboardX as tbx
+import torch
 
 
 
@@ -27,10 +28,9 @@ import tensorboardX as tbx
 版本性能
 1.基本训练功能
 2.结果保存，断点续训
-----------------------------------------------
-A 可视化：Tensorboard https://github.com/lanpa/tensorboardX
-B 保存读取，终端显示
-C 梯度修剪
+3.可视化：Tensorboard https://github.com/lanpa/tensorboardX
+4.保存读取，终端显示
+5.梯度修剪
 '''
 ################
 '''
@@ -40,6 +40,7 @@ C 梯度修剪
 2. PyTorch use NCHW
 
 '''
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     # load the dataset
@@ -226,6 +227,7 @@ def main():
                 sumWriter.add_image('Data/result', pred + x, globalStep)
                 sumWriter.add_image('Data/pred', pred, globalStep)
                 sumWriter.add_image('Data/residualToLearn', y- x, globalStep)
+                sumWriter.add_image('Data/Delta', torch.abs(pred - (y - x)), globalStep)
                 # for better visualization
                 nc = np.random.randint(0,conf.BATCH_SIZE-1)
                 xnc = x[nc,:,:,:]
