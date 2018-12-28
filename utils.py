@@ -123,7 +123,7 @@ def modCrop(image,scale):
         newImg = image[:hh, :ww,:]
     return newImg
 
-def testPSNR(netModule, testSetPath, scales):
+def testPSNRAtLast(netModule, testSetPath, scales):
     # read the dirs and get to know the sets
     # we have tsNum ds in dsList
     netModule = netModule.cuda()
@@ -140,15 +140,6 @@ def testPSNR(netModule, testSetPath, scales):
     dsLoader = dataloader
     sumList = np.zeros(tsNum)
     numList = np.zeros(tsNum)
-
-#    for idxTestSet in range(tsNum):
-#        tsName = tsNames[idxTestSet]
-#        print('Checking '+tsName)
-#        sum = 0.0;
-#        counter = 0;
-
-
-
     for scale in scales:
         for _, smpl in enumerate(dsLoader, 1):
             y = np.array(smpl[0])
@@ -207,21 +198,59 @@ def testPSNR(netModule, testSetPath, scales):
 
     # return  the results of the psnr per test
 
+def prepareXYByPath(path,scale):
+    img = cv.imread(path);
+    imgYUV = cv.cvtColor(img,cv.COLOR_BGR2YCR_CB)
+    imgY = imgYUV[:,:,0]
+    imgYCropped = modCrop(imgY)
+    h = imgYCropped.shape[0];w = imgYCropped.shape[1];
+    x = scipy.misc.imresize(imgYCropped, (int(h / scale), int(w / scale)),
+                             interp='bicubic', mode=None)
+    x = scipy.misc.imresize(x, (int(h), int(w)),
+                             interp='bicubic', mode=None)
+    x = x.astype(np.float32) / 255
+    y = imgYCropped.astype(np.float32) / 255
+    return x,y
+
+
+def testPSNR(net,path,scale):
+    # with the interface of 
+    DELTA = 12;
+    net = net.cuda()
+    tsNames = os.listdir(path)
+    tsNames.sort()
+    tsNum = len(tsNames)
+    round = tsNum // DELTA
+    residual = tsNum % DELTA
+    sum = 0.0
+    for rn in range(round):
+
+
+    return 3;
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 if __name__ == '__main__':
+    net = nt.VDSR()
+    net_stat, epoch, iterr, globalStep = loadLatestCheckpoint()
+    if net_stat is None:
+        print('No previous model found, start training now')
+    else:
+        net.load_state_dict(net_stat)
+        print('The lastest version is Epoch %d, iter is %d，GLoablStep: %d' % (epoch, iterr, globalStep))
+    d = 3
+    z = testPSNR(net, os.path.join(conf.TEST_SET_PATH,'BSD100'), 2);
     '''
     saveCheckpoint('1', 2, 28342, fnCore='model')
     saveCheckpoint('q1',3, 8342, fnCore='model')
     saveCheckpoint('qwett1', 3, 28342, fnCore='model')
     saveCheckpoint('dfsa1', 2, 2, fnCore='model')
     saveCheckpoint('sdf1', 1, 728342, fnCore='model')
-    '''
+
     # testPSNR(nt.VDSR(), conf.TEST_SET_PATH)
 
     # NCHW
-
+    #########################################
     net = nt.VDSR()
     net_stat, epoch, iterr, globalStep = loadLatestCheckpoint()
     if net_stat is None:
@@ -233,8 +262,7 @@ if __name__ == '__main__':
 
     z = testPSNR(net, conf.TEST_SET_PATH, [2,3,4])
     a = 1
-
-    '''
+    ##################################
     MAX = 80000
 
     inx = torch.rand([1,77])
