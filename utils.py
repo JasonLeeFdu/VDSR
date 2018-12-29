@@ -138,15 +138,14 @@ def testPSNRAtLast(netModule, testSetPath, scales):
     ds = datasets.ImageFolder(os.path.join(testSetPath), transform=transformer)
     dataloader = torch.utils.data.DataLoader(ds, batch_size=1, shuffle=False, num_workers=1)
     dsLoader = dataloader
-    sumList = np.zeros(tsNum)
-    numList = np.zeros(tsNum)
     for scale in scales:
+        sumList = np.zeros(tsNum)
+        numList = np.zeros(tsNum)
         for _, smpl in enumerate(dsLoader, 1):
             y = np.array(smpl[0])
             numList[smpl[1]] += 1
             y = np.squeeze(y)
             y = np.transpose(y, [1, 2, 0])
-
             if len(y.shape) == 3:
                 c = 3
             else:
@@ -185,9 +184,6 @@ def testPSNRAtLast(netModule, testSetPath, scales):
             inY = inY.cuda()
             res = PSNR_PT_Y255(predY, inY).detach().cpu().numpy()
             sumList[smpl[1]] += res
-            # predYNp   = predY.detach().cpu().numpy();predYNp = predYNp.astype(np.uint8);predYNp = predYNp.squeeze();
-            # inYNp     = inY.detach().cpu().numpy();inYNp = inYNp.astype(np.uint8);inYNp = inYNp.squeeze();
-            # cv.imshow('predYNp'+str(res),predYNp);cv.imshow('inputa',xY);cv.imshow('inY',inYNp);cv.waitKey(0);cv.destroyAllWindows()
         avgList = sumList / numList
         resDict[str(scale)] = dict()
         for i in  range(len(tsNames)):
@@ -198,37 +194,60 @@ def testPSNRAtLast(netModule, testSetPath, scales):
 
     # return  the results of the psnr per test
 
+
+
 def prepareXYByPath(path,scale):
-    img = cv.imread(path);
-    imgYUV = cv.cvtColor(img,cv.COLOR_BGR2YCR_CB)
-    imgY = imgYUV[:,:,0]
-    imgYCropped = modCrop(imgY)
+    img = Image.open(path)
+    img = np.asarray(img)
+
+    if len(img.shape) != 3:
+        imgY = img
+    else:
+        img = img[:,:,[2,1,0]]
+        imgYUV = cv.cvtColor(img,cv.COLOR_BGR2YCR_CB)
+        imgY = imgYUV[:,:,0]
+
+    imgYCropped = modCrop(imgY,scale)
     h = imgYCropped.shape[0];w = imgYCropped.shape[1];
     x = scipy.misc.imresize(imgYCropped, (int(h / scale), int(w / scale)),
                              interp='bicubic', mode=None)
     x = scipy.misc.imresize(x, (int(h), int(w)),
                              interp='bicubic', mode=None)
-    x = x.astype(np.float32) / 255
-    y = imgYCropped.astype(np.float32) / 255
+    x = x.astype(np.float32)/255
+    y = imgYCropped.astype(np.float32)
     return x,y
 
 
-def testPSNR(net,path,scale):
-    # with the interface of 
-    DELTA = 12;
-    net = net.cuda()
+def testPSNR(nt,path,scale):
+    # with the interface of "prepareXYByPath", pytorch:NCHW
+    nt = nt.cuda()
     tsNames = os.listdir(path)
     tsNames.sort()
-    tsNum = len(tsNames)
-    round = tsNum // DELTA
-    residual = tsNum % DELTA
-    sum = 0.0
-    for rn in range(round):
+    tsNum = torch.FloatTensor([len(tsNames)]).cuda()
+    im = cv.imread(os.path.join(path, tsNames[0]))
+    h = im.shape[0]
+    w = im.shape[1]
+    psnr = torch.FloatTensor([0.0]).cuda()
+
+    for idxImg in range(len(tsNames)):
+        imgPath = os.path.join(path, tsNames[idxImg])
+        x, y = prepareXYByPath(imgPath, scale)
+        inx  = torch.FloatTensor(x)
+        inpx  = torch.unsqueeze(inx,0);inpx  = torch.unsqueeze(inpx,0).cuda();
+        iny  = torch.FloatTensor(y).cuda()
+        # 后处理很重要
+        predY = nt(inpx) + inpx
+        predY = torch.max(torch.FloatTensor([0.0]).expand_as(predY).cuda(), predY)
+        predY = torch.min(torch.FloatTensor([1.0]).expand_as(predY).cuda(), predY)
+        predY = torch.round(predY * 255);
+        predY = predY.squeeze();
+        psnr_ = PSNR_PT_Y255(predY,iny)
+        psnr += psnr_.detach()
+    psnr /= tsNum
+    return psnr
 
 
-    return 3;
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+'''
 
 if __name__ == '__main__':
     net = nt.VDSR()
@@ -239,15 +258,23 @@ if __name__ == '__main__':
         net.load_state_dict(net_stat)
         print('The lastest version is Epoch %d, iter is %d，GLoablStep: %d' % (epoch, iterr, globalStep))
     d = 3
-    z = testPSNR(net, os.path.join(conf.TEST_SET_PATH,'BSD100'), 2);
-    '''
+    resDict = testPSNRAtLast(net, conf.TEST_SETS_PATH, [2, 3, 4])
+    psnr = testPSNR(net, os.path.join(conf.TEST_SETS_PATH,'BSD100'), 3)
+    print(psnr)
+    print(zz)
+    
+    
+    
+    
+    
+    
     saveCheckpoint('1', 2, 28342, fnCore='model')
     saveCheckpoint('q1',3, 8342, fnCore='model')
     saveCheckpoint('qwett1', 3, 28342, fnCore='model')
     saveCheckpoint('dfsa1', 2, 2, fnCore='model')
     saveCheckpoint('sdf1', 1, 728342, fnCore='model')
 
-    # testPSNR(nt.VDSR(), conf.TEST_SET_PATH)
+    # testPSNR(nt.VDSR(), conf.TEST_SETS_PATH)
 
     # NCHW
     #########################################
@@ -260,7 +287,7 @@ if __name__ == '__main__':
         print('The lastest version is Epoch %d, iter is %d，GLoablStep: %d' % (epoch, iterr, globalStep))
         # globalStep += 1
 
-    z = testPSNR(net, conf.TEST_SET_PATH, [2,3,4])
+    z = testPSNR(net, conf.TEST_SETS_PATH, [2,3,4])
     a = 1
     ##################################
     MAX = 80000
@@ -289,10 +316,6 @@ if __name__ == '__main__':
             H.data.add_(100)
             print(h)
             print('H:')
-            print(H)
-            print('Loss:')
-            print(loss)
-            print('----------------------------');print('')
-        optimizer.step()
-        s  = 1
-    '''
+            print(H)psnr_
+    
+'''

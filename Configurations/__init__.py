@@ -5,7 +5,7 @@ TRAIN_DIR = os.path.join(_PROJECT_BASEPATH,'Data/Train/')
 DATASET_DIR = os.path.join(_PROJECT_BASEPATH,'Data/Dataset')
 DATASET_FN = 'srdb'
 SRDS291_PATH = os.path.join(_PROJECT_BASEPATH,'Data/291/')
-TEST_SET_PATH = os.path.join(_PROJECT_BASEPATH,'Data/testSet/')
+TEST_SETS_PATH = os.path.join(_PROJECT_BASEPATH,'Data/testSet/')
 PATCH_SIZE = 48
 NUM_WORKERS = 3
 MAX_Epoch = 80
@@ -32,4 +32,4 @@ WEIGHT_INIT_STDDEV_FACTOR = 1              # big
 SUMMARY_SCALAR_FIX  = 3e-3
 GRADIENT_CLIP_THETA = 0.1
 BATCH_SIZE_TEST = 1;
-
+TEST_SET_PATH = os.path.join(TEST_SETS_PATH,'Set14')

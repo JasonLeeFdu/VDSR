@@ -192,17 +192,19 @@ def main():
             utils.gradientClip(net.parameters(), conf.GRADIENT_CLIP_THETA/utils.get_lr(optimizer))
             optimizer.step()
             ####
-
-
             endTime = time.time()
             lossData = loss.cpu().detach().numpy()
             loss.cuda()
             AvgFreq += endTime - startTime
             Avgloss += lossData
-            if loss < 0.01:
+            if loss < 0.01 and iterNum % conf.SUM_INTERVAL == 0 and iterNum is not 0:
                 sumWriter.add_scalar('Data/loss', loss, globalStep)
+                if iterNum % (2 * conf.SUM_INTERVAL) == 0:
+                    psnr = utils.testPSNR(net,conf.TEST_SET_PATH,2)
+                    sumWriter.add_scalar('Data/psnr_Set14_2', psnr, globalStep)
             else:
                 sumWriter.add_scalar('Data/loss', torch.Tensor(np.array(conf.SUMMARY_SCALAR_FIX)), globalStep)
+                sumWriter.add_scalar('Data/loss', loss, globalStep)
 
             if iterNum % conf.PRINT_INTERVAL == 0 and iterNum is not 0:
                 AvgFreq = (conf.PRINT_INTERVAL * conf.BATCH_SIZE) / AvgFreq
@@ -243,6 +245,7 @@ def main():
 
             if iterNum % conf.SAVE_INTERVAL == 0 and iterNum is not 0:
                 utils.saveCheckpoint(net.state_dict(),epoch_pos,iterNum,globalStep)
+
                 print('...... SAVED')
         iterr = -1
 
